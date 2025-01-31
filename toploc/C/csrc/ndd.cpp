@@ -74,6 +74,72 @@ std::vector<std::vector<int>> calculate_divided_differences(
     
     return dd;
 }
+/*
+ * using  n(n+1)/2 memory instead of n^2
+ * U should be able to allocate dd[i] with size (n - i) rather than using an n x n matrix.
+ * So u really only need to store the sub triangle doesn't work -> needs investigation.
+ * The speedup and memory usage optimization is negliable. R1 wanted a 2D matrix. But I guess this should be even better.
+ * Btw. compute_newton_coefficients R1 suggestion was to externalize mod. Hasn't had a huge impact. on speed. Current impl is very fast.
+std::vector<std::vector<int>> calculate_divided_differences(
+    const std::vector<int>& x,
+    const std::vector<int>& y
+) {
+    int n = static_cast<int>(x.size());
+    
+    std::vector<std::vector<int>> dd(n);
+    for (int i = 0; i < n; i++) {
+        dd[i].resize(n - i);
+    }
+
+    for (int i = 0; i < n; i++) {
+        long long val = (static_cast<long long>(y[i]) % MOD_N);
+        if (val < 0) {
+            val += MOD_N;
+        }
+        dd[i][0] = static_cast<int>(val);
+    }
+
+    // triangular structure
+    for (int j = 1; j < n; j++) {
+        for (int i = 0; i < n - j; i++) {
+            // numer = (dd[i+1][j-1] - dd[i][j-1]) mod MOD_N
+            long long tmp_numer = static_cast<long long>(dd[i + 1][j - 1]) 
+                                  - static_cast<long long>(dd[i][j - 1]);
+            tmp_numer = tmp_numer % MOD_N;
+            if (tmp_numer < 0) {
+                tmp_numer += MOD_N;
+            }
+            long long numer = tmp_numer;
+
+            long long xi_j = (static_cast<long long>(x[i + j]) % MOD_N);
+            if (xi_j < 0) {
+                xi_j += MOD_N;
+            }
+            long long xi = (static_cast<long long>(x[i]) % MOD_N);
+            if (xi < 0) {
+                xi += MOD_N;
+            }
+            long long tmp_denom = (xi_j - xi) % MOD_N;
+            if (tmp_denom < 0) {
+                tmp_denom += MOD_N;
+            }
+            long long denom = tmp_denom;
+
+            int inv_denom = modInverse(static_cast<int>(denom), MOD_N);
+
+            long long product = numer * inv_denom;
+            product = product % MOD_N;
+            if (product < 0) {
+                product += MOD_N;
+            }
+
+            dd[i][j] = static_cast<int>(product);
+        }
+    }
+
+    return dd;
+}
+*/
 
 // core idea we can c = [c0,c1,...,c{n-1}] we can do the polynomial expansion in a single pass.
 // INstead of mulitiplying the polynomials inside a nested loop repeatly incurring a factor of n we keep a "factor polynomial" that updates each time by multipllying it once by (x-x[i])

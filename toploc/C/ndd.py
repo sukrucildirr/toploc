@@ -5,6 +5,7 @@ from pathlib import Path
 
 NDD_CSRC_PATH = Path(__file__).parent / "csrc" / "ndd.cpp"
 
+
 ndd_ops = load(name="ndd", sources=[NDD_CSRC_PATH], extra_cflags=["-O3"], verbose=True)
 
 
