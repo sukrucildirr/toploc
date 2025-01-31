@@ -79,7 +79,7 @@ std::vector<std::vector<int>> calculate_divided_differences(
  * U should be able to allocate dd[i] with size (n - i) rather than using an n x n matrix.
  * So u really only need to store the sub triangle doesn't work -> needs investigation.
  * The speedup and memory usage optimization is negliable. R1 wanted a 2D matrix. But I guess this should be even better.
- * Btw. compute_newton_coefficients R1 suggestion was to externalize mod. Hasn't had a huge impact. on speed. Current impl is very fast.
+ * Btw. compute_newton_coefficients R1 suggestion was to externalize mod. Hasn't had a huge impact on speed. Current impl already is very fast.
 std::vector<std::vector<int>> calculate_divided_differences(
     const std::vector<int>& x,
     const std::vector<int>& y

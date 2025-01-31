@@ -4,7 +4,7 @@ from toploc.ndd import compute_newton_coefficients as compute_newton_coefficient
 
 MOD_N = 65497
 
-n = 5000
+n = 10000
 x = list(range(n))
 y = [i % MOD_N for i in range(n)]
 
