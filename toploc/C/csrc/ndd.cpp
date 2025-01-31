@@ -75,48 +75,79 @@ std::vector<std::vector<int>> calculate_divided_differences(
     return dd;
 }
 
-// Main function to compute polynomial coefficients
-std::vector<int> compute_newton_coefficients(
-    const std::vector<int>& x,
-    const std::vector<int>& y
-) {
-    TORCH_CHECK(x.size() == y.size(), "Input vectors must have the same size");
-    TORCH_CHECK(!x.empty(), "Input vectors must not be empty");
+// core idea we can c = [c0,c1,...,c{n-1}] we can do the polynomial expansion in a single pass.
+// INstead of mulitiplying the polynomials inside a nested loop repeatly incurring a factor of n we keep a "factor polynomial" that updates each time by multipllying it once by (x-x[i])
+//   P(x) = c0+c1*x+c2*x^2+... +c{n-1}*x^{n-1}(mod MOD_N)
+// with interpolation points (x[i],y[i]).
+// so we have O(n^2) 
+std::vector<int> compute_newton_coefficients(const std::vector<int>& x,
+                                            const std::vector<int>& y)
+{
+    TORCH_CHECK(x.size() == y.size(),
+                "Input vectors must have the same size");
+    TORCH_CHECK(!x.empty(),
+                "Input vectors must not be empty");
 
-    int n = x.size();
-    std::vector<std::vector<int>> dd = calculate_divided_differences(x, y);
-    std::vector<int> coefficients(n, 0);
-    
-    // Convert divided differences to polynomial coefficients
-    coefficients[0] = dd[0][0];
-    
-    for (int i = 1; i < n; i++) {
-        // Compute term: dd[0][i] * (x - x[0])(x - x[1])...(x - x[i-1])
-        std::vector<int> term(i + 1, 0);
-        term[0] = dd[0][i];
-        
-        for (int j = 0; j < i; j++) {
-            // Multiply by (x - x[j])
-            std::vector<int> temp = term;
-            for (int k = i; k > 0; k--) {
-                term[k] = temp[k - 1];
-            }
-            term[0] = 0;
-            
-            for (int k = 0; k <= i; k++) {
-                term[k] -= (temp[k] * x[j]) % MOD_N;
-                term[k] = (term[k] % MOD_N + MOD_N) % MOD_N;
-            }
-        }
-        
-        // Add term to coefficients
-        for (int j = 0; j <= i; j++) {
-            coefficients[j] += term[j];
-            coefficients[j] %= MOD_N;
+    const int n = static_cast<int>(x.size());
+
+    //int* dd = (int*)alloca(n * sizeof(int)); // std::vector<int> dd(n);
+    std::vector<int> dd(n);
+    for (int i = 0; i < n; i++) {
+        dd[i] = safeMod(y[i]);
+    }
+
+    // compute the divided differences in plaace
+    //       dd[i]=(dd[i]-dd[i-1])/(x[i]-x[i-k])(mod MOD_N)
+    for (int k = 1; k < n; k++) {
+        for (int i = n - 1; i >= k; i--) {
+            int numer = safeMod((long long)dd[i] - dd[i - 1]);
+
+            // denominator = (x[i] - x[i-k]) mod
+            long long denom = (long long)x[i] - (long long)x[i - k];
+            int invDen = modInverse(safeMod(denom), MOD_N);
+
+            dd[i] = safeMod((long long)numer * invDen);
         }
     }
-    
-    return coefficients;
+    // after this dd[i] holds the i-th Newton coefficient
+    // we expand the polynomial in standard form c(x)  we store the final polynomial in coeffs
+   
+    std::vector<int> coeffs(n, 0); 
+
+    //int* factor = (int*)alloca(n * sizeof(int));
+    std::vector<int> factor(n, 0);
+    factor[0] = 1;
+    for (int i = 1; i < n; i++) {
+        factor[i] = 0;
+    }
+
+   
+    for (int i = 0; i < n; i++) {
+        const int dd_i = dd[i];
+
+        for (int j = 0; j <= i; j++) {
+            long long sumVal = (long long)coeffs[j]
+                             + (long long)dd_i * factor[j];
+            coeffs[j] = safeMod(sumVal);
+        }
+
+        // If we're not on the last iter we need update factor(x) *= (x - x[i]). factor is currently degree i becomes degree i+1
+        if (i + 1 < n) {
+            const int minusXi = safeMod(- (long long)x[i]);
+            // In place update
+            int prevVal = factor[0];
+            factor[0] = safeMod((long long)prevVal * minusXi);
+            for (int k = 1; k <= i + 1; k++) {
+                int oldVal = factor[k];
+                long long newVal = (long long)prevVal
+                                 + (long long)oldVal * minusXi;
+                factor[k] = safeMod(newVal);
+                prevVal = oldVal;
+            }
+        }
+    }
+
+    return coeffs;
 }
 
 // Fix interpolation test case error
