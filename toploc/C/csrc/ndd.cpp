@@ -119,22 +119,18 @@ std::vector<int> compute_newton_coefficients(
     return coefficients;
 }
 
-int evaluate_polynomial(
-    const std::vector<int>& coefficients,
-    int x
-) {
-    // Start with highest degree coefficient
-    int result = coefficients.back();
-    
-    // Apply Horner's method
-    for (int i = coefficients.size() - 2; i >= 0; i--) {
-        result = (result * x) % MOD_N + coefficients[i];
-        result %= MOD_N;
+// Fix interpolation test case error
+int evaluate_polynomial(const std::vector<int>& coefficients, int x)
+{
+    // Start with highest degree coefficient 
+    long long result = coefficients.back();
+
+    // Apply Horner's method 
+    for (int i = static_cast<int>(coefficients.size()) - 2; i >= 0; i--) {
+        result = (result * x + coefficients[i]) % MOD_N;
     }
 
-    result = (result + MOD_N) % MOD_N;
-    
-    return result;
+    return static_cast<int>((result + MOD_N) % MOD_N);
 }
 
 // Python module definition
