@@ -7,30 +7,44 @@ namespace py = pybind11;
 
 constexpr int MOD_N = 65497;
 
+inline int safeMod(long long v) {
+    v = v % MOD_N;
+    if (v < 0) v += MOD_N;
+    return static_cast<int>(v);
+}
+
+// Current modInverse cause each iter q = a /m; then m - a %m; & a = 5. Basically a m is can siliently used in wrong roles
+// More standart eea where we keep track of old_r and ols. So keep track of the current reamainder and coefficient.
+// eea a^-1 (mod m)
 int modInverse(int a, int m) {
-    a = (a + m) % m;  // Ensure a is positive
-    int m0 = m;
-    int y = 0, x = 1;
-    
-    if (m == 1)
+    a = safeMod(a);
+    if (m <= 1) {
         return 0;
-    
-    while (a > 1) {
-        // q is quotient
-        int q = a / m;
-        int t = m;
-        
-        // m is remainder now
-        m = a % m;
-        a = t;
-        t = y;
-        
-        // Update y and x
-        y = x - q * y;
-        x = t;
     }
     
-    return (x + m0) % m0;  // Ensure result is positive
+    // old_r, old_s track the "previous" remainder and coefficient
+    // r, s track the "current" remainder and coefficient
+    int old_r = a, r = m;
+    int old_s = 1, s = 0;
+
+    while (r != 0) {
+        int q = old_r / r;     
+        int temp_r = old_r - q*r;
+        old_r = r;
+        r = temp_r;
+
+        int temp_s = old_s - q*s;
+        old_s = s;
+        s = temp_s;
+    }
+
+    // gcd(a, m) should always be 1 if a != 0 mod m. So better throw an error jic.
+    if (old_r != 1) {
+        throw std::runtime_error("No modular inverse: gcd(a, m) != 1.");
+    }
+
+    // Bezout coefficient for a.
+    return safeMod(old_s);
 }
 
 // Helper function to calculate divided differences
@@ -51,7 +65,7 @@ std::vector<std::vector<int>> calculate_divided_differences(
         for (int i = 0; i < n - j; i++) {
             numer = (dd[i + 1][j - 1] - dd[i][j - 1]) % MOD_N;
             denom = (x[i + j] - x[i]) % MOD_N;
-            denom = (denom + MOD_N) % MOD_N;
+            // denom = (denom + MOD_N) % MOD_N; should not be needed
             inv_denom = modInverse(denom, MOD_N);
             dd[i][j] = (numer * inv_denom) % MOD_N;
             dd[i][j] = (dd[i][j] + MOD_N) % MOD_N;
