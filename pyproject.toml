@@ -1,0 +1,44 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "build",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toploc"
+dynamic = ["version"]
+authors = [
+    {name = "Jack Min Ong", email = "ongjackm@gmail.com"},
+]
+description = "Lib for generating model inference and training proofs"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "torch",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "toploc.__version__"}
+
+[tool.cibuildwheel]
+test-command = "python -c \"import toploc\""
+test-skip = ["*universal2:arm64"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+before-build = "pip install delocate"
+repair-wheel-command = "delocate-wheel --require-archs {archs} -w {dest_dir} -v {wheel}"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
