@@ -22,8 +22,8 @@ extensions = [
 setup(
     name='toploc',
     ext_modules=extensions,
-    #packages=['toploc', 'toploc.C.csrc'],
-    packages=find_packages(),
+    packages=['toploc', 'toploc.C.csrc'],
+    #packages=find_packages(),
     package_data={
         'toploc.C.csrc': ['*.pyi'],  # Include .pyi files
     },
