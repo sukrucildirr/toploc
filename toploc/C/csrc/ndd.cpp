@@ -82,9 +82,9 @@ std::vector<int> compute_newton_coefficients(const std::vector<int>& x,
             dd[i] = safeMod((long long)numerator * invDen);
         }
     }
-    
+
     // Now dd[i] is the i-th Newton coefficient.
-    // (B) Single-Pass Expansion into Standard Form
+    // Single-Pass Expansion into Standard Form
     // We'll accumulate final polynomial coeffs in 'coeffs'
     std::vector<int> coeffs(n, 0);
 
