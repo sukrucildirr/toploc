@@ -1,1 +1,2 @@
-# This file can be empty, it's just to mark the directory as a Python package 
+# We need to import torch here to set up the .so files
+import torch # noqa: F401
