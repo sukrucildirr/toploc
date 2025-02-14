@@ -17,7 +17,7 @@ authors = [
 ]
 description = "Lib for generating model inference and training proofs"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -27,6 +27,13 @@ classifiers = [
 dependencies = [
     "torch",
     "numpy",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "pre-commit",
+    "pytest",
 ]
 
 [tool.setuptools.dynamic]
