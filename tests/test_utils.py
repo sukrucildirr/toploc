@@ -1,4 +1,4 @@
-from toploc.C.utils import get_fp_parts
+from toploc.C.csrc.utils import get_fp_parts
 import torch
 import time
 import pytest

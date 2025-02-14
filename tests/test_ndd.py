@@ -1,7 +1,6 @@
 import pytest
 import random
-from toploc.C.ndd import compute_newton_coefficients, evaluate_polynomial
-#from toploc.ndd import compute_newton_coefficients, evaluate_polynomial
+from toploc.C.csrc.ndd import compute_newton_coefficients, evaluate_polynomial
 
 @pytest.mark.parametrize("x, y", [
     ([0], [42]),

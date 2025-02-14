@@ -31,7 +31,7 @@ TMEDIAN = 8
 TEXP = 90
 
 def check(activations: list[torch.Tensor], proof: list[str]) -> tuple[list[int], list[int], list[float], list[float]]:
-    from toploc.C.utils import get_fp_parts
+    from toploc.C.csrc.utils import get_fp_parts
     topk_intersections: list[int] = []
     exp_intersections: list[int] = []
     mant_err_means: list[float] = []

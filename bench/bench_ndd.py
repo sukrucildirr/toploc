@@ -3,7 +3,7 @@ Simplistic benchmark comparing Python and C++ implementations of ndd.
 """
 
 import timeit
-from toploc.C.ndd import compute_newton_coefficients as compute_newton_coefficients_cpp
+from toploc.C.csrc.ndd import compute_newton_coefficients as compute_newton_coefficients_cpp
 from toploc.ndd import compute_newton_coefficients as compute_newton_coefficients_py
 
 MOD_N = 65497
