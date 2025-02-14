@@ -9,13 +9,11 @@ extensions = [
         name='toploc.C.csrc.ndd',
         sources=[os.path.join(CSRC_DIR, 'ndd.cpp')],
         extra_compile_args=['-O3'],
-        extra_link_args=['-Wl,--no-as-needed', '-lm'],
     ),
     CppExtension(
         name='toploc.C.csrc.utils',
         sources=[os.path.join(CSRC_DIR, 'utils.cpp')],
         extra_compile_args=['-O3'],
-        extra_link_args=['-Wl,--no-as-needed', '-lm'],
     ),
 ]
 
@@ -23,7 +21,6 @@ setup(
     name='toploc',
     ext_modules=extensions,
     packages=['toploc', 'toploc.C.csrc'],
-    #packages=find_packages(),
     package_data={
         'toploc.C.csrc': ['*.pyi'],  # Include .pyi files
     },
