@@ -29,6 +29,13 @@ dependencies = [
     "numpy",
 ]
 
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "pre-commit",
+    "pytest",
+]
+
 [tool.setuptools.dynamic]
 version = {attr = "toploc.__version__"}
 
