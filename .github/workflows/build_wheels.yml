@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-latest, windows-latest, macos-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
         python: ["cp39", "cp310", "cp311", "cp312"]
 
     steps:
@@ -45,7 +45,7 @@ jobs:
           CIBW_BUILD: ${{ matrix.python }}-*
           CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_ARCHS_MACOS: "arm64"
-          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ARCHS_LINUX: ${{ contains(matrix.os, 'arm') && 'aarch64' || 'x86_64' }}
           CIBW_BEFORE_BUILD: "pip install pybind11 cmake"
           CIBW_SKIP: "*-musllinux_*"
         run: python -m cibuildwheel --output-dir wheelhouse
