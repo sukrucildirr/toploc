@@ -29,6 +29,11 @@ dependencies = [
     "numpy",
 ]
 
+[project.urls]
+Documentation = "https://github.com/PrimeIntellect-ai/toploc"
+Repository = "https://github.com/PrimeIntellect-ai/toploc"
+Issues = "https://github.com/PrimeIntellect-ai/toploc/issues"
+
 [tool.uv]
 dev-dependencies = [
     "ruff",
