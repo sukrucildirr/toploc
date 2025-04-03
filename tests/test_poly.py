@@ -1,3 +1,4 @@
+import pickle
 import pytest
 import torch
 import base64
@@ -318,3 +319,20 @@ def test_verify_proofs_bytes_skip_prefill(sample_activations):
     assert all(r.exp_mismatches == 0 for r in results)
     assert all(r.mant_err_mean == 0 for r in results)
     assert all(r.mant_err_median == 0 for r in results)
+
+
+def test_pickleable_VerificationResult():
+    result = VerificationResult(1, 2, 3)
+    result_pickled = pickle.dumps(result)
+    result_unpickled = pickle.loads(result_pickled)
+    assert result_unpickled == result
+    assert result_unpickled != VerificationResult(2, 2, 3)
+
+
+def test_pickleable_ProofPoly():
+    poly = ProofPoly([1, 2, 3], 4)
+    poly_pickled = pickle.dumps(poly)
+    poly_unpickled = pickle.loads(poly_pickled)
+    assert poly_unpickled == poly
+    assert poly_unpickled != ProofPoly([1, 2, 3], 5)
+    assert poly_unpickled != ProofPoly([1, 2, 4], 4)

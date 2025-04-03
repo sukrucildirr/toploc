@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <pybind11/stl.h>
+#include <pybind11/operators.h>
 #include "./ndd.cpp"
 #include "./utils.cpp"
 
@@ -107,6 +109,22 @@ public:
 
     size_t length() const {
         return coeffs.size();
+    }
+
+    bool operator==(const ProofPoly& other) const {
+        return coeffs == other.coeffs && modulus == other.modulus;
+    }
+
+    bool operator!=(const ProofPoly& other) const {
+        return !(*this == other);
+    }
+
+    py::tuple to_tuple() const {
+        return py::make_tuple(coeffs, modulus);
+    }
+
+    static ProofPoly from_tuple(const py::tuple& tuple) {
+        return ProofPoly(tuple[0].cast<std::vector<int>>(), tuple[1].cast<int>());
     }
 
     static ProofPoly from_bytes(const std::string& data) {
@@ -272,8 +290,28 @@ public:
 
     std::string repr() const {
         std::ostringstream oss;
-        oss << "VerificationResult[" << exp_mismatches << ", " << mant_err_mean << ", " << mant_err_median << "]";
+        oss << "VerificationResult[exp_mismatches=" << exp_mismatches 
+            << ", mant_err_mean=" << mant_err_mean 
+            << ", mant_err_median=" << mant_err_median << "]";
         return oss.str();
+    }
+
+    bool operator==(const VerificationResult& other) const {
+        return exp_mismatches == other.exp_mismatches &&
+            mant_err_mean == other.mant_err_mean &&
+            mant_err_median == other.mant_err_median;
+    }
+
+    bool operator!=(const VerificationResult& other) const {
+        return !(*this == other);
+    }
+
+    py::tuple to_tuple() const {
+        return py::make_tuple(exp_mismatches, mant_err_mean, mant_err_median);
+    }
+
+    static VerificationResult from_tuple(const py::tuple& tuple) {
+        return VerificationResult(tuple[0].cast<int>(), tuple[1].cast<double>(), tuple[2].cast<double>());
     }
 };
 
@@ -402,15 +440,27 @@ PYBIND11_MODULE(poly, m) {
         .def_static("from_bytes", &ProofPoly::from_bytes)
         .def_static("from_base64", &ProofPoly::from_base64)
         .def("__repr__", &ProofPoly::repr)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def(py::pickle(
+            [](const ProofPoly &p) { return p.to_tuple(); },
+            [](const py::tuple &t) { return ProofPoly::from_tuple(t); }
+        ))
         .def_readwrite("coeffs", &ProofPoly::coeffs)
         .def_readwrite("modulus", &ProofPoly::modulus);
 
     py::class_<VerificationResult>(m, "VerificationResult")
         .def(py::init<int, double, double>())
+        .def(py::pickle(
+            [](const VerificationResult &v) { return v.to_tuple(); },
+            [](const py::tuple &t) { return VerificationResult::from_tuple(t); }
+        ))
         .def_readwrite("exp_mismatches", &VerificationResult::exp_mismatches)
         .def_readwrite("mant_err_mean", &VerificationResult::mant_err_mean)
         .def_readwrite("mant_err_median", &VerificationResult::mant_err_median)
-        .def("__repr__", &VerificationResult::repr);
+        .def("__repr__", &VerificationResult::repr)
+        .def(py::self == py::self)
+        .def(py::self != py::self);
         
     m.def("verify_proofs", &verify_proofs, 
           py::arg("activations"), 
