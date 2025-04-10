@@ -291,6 +291,8 @@ public:
     double mant_err_mean;
     double mant_err_median;
 
+    VerificationResult() noexcept = default;
+
     VerificationResult(int exp_mismatches_, double mant_err_mean_, double mant_err_median_)
         : exp_mismatches(exp_mismatches_), mant_err_mean(mant_err_mean_), mant_err_median(mant_err_median_) {}
 
@@ -327,11 +329,7 @@ std::vector<VerificationResult> verify_proofs(
     int decode_batching_size,
     int topk
 ) {
-    std::vector<VerificationResult> results;
-    
-    // TODO: Do batches in parallel
-    // Process activations in batches
-    for (size_t proof_idx = 0; proof_idx < proofs.size(); proof_idx++) {
+    const auto eval_batch = [&](size_t proof_idx) -> VerificationResult {
         // Get corresponding activation batch
         int batch_start = proof_idx * decode_batching_size;
         int batch_end = std::min(batch_start + decode_batching_size, (int)activations.numel());
@@ -339,7 +337,7 @@ std::vector<VerificationResult> verify_proofs(
         DEBUG_PRINT("batch_start: " << batch_start);
         DEBUG_PRINT("batch_end: " << batch_end);
         torch::Tensor chunk = activations.slice(0, batch_start, batch_end);
-        
+
         DEBUG_PRINT("chunk: " << chunk.sizes());
         chunk = chunk.view({-1});
         DEBUG_PRINT("chunk: " << chunk.sizes());
@@ -355,7 +353,7 @@ std::vector<VerificationResult> verify_proofs(
 
         // Evaluate polynomial at topk indices
         std::vector<int> indices_vec(
-            topk_indices.const_data_ptr<int64_t>(), 
+            topk_indices.const_data_ptr<int64_t>(),
             topk_indices.const_data_ptr<int64_t>() + topk_indices.numel()
         );
 
@@ -367,7 +365,7 @@ std::vector<VerificationResult> verify_proofs(
         DEBUG_PRINT("indices_vec: " << indices_vec.size());
         DEBUG_PRINT("proofs[proof_idx].coeffs: " << proofs[proof_idx].coeffs.size());
         std::vector<int> y_values = evaluate_polynomials(proofs[proof_idx].coeffs, indices_vec);
-        
+
         // Convert to tensors for comparison
         std::vector<uint16_t> proof_values(y_values.begin(), y_values.end());
 
@@ -383,7 +381,7 @@ std::vector<VerificationResult> verify_proofs(
         // Calculate mismatches and errors
         std::vector<bool> exp_mismatches;
         std::vector<float> mant_errs;
-        
+
         for (int i = 0; i < topk; i++) {
             bool exp_mismatch = exps[i] != proof_exps[i];
             exp_mismatches.push_back(exp_mismatch);
@@ -396,7 +394,7 @@ std::vector<VerificationResult> verify_proofs(
         int exp_mismatch_count = std::count(exp_mismatches.begin(), exp_mismatches.end(), true);
         double mean = 0.0;
         double median = 0.0;
-        
+
         if (!mant_errs.empty()) {
             mean = std::accumulate(mant_errs.begin(), mant_errs.end(), 0.0) / mant_errs.size();
             std::sort(mant_errs.begin(), mant_errs.end());
@@ -405,9 +403,27 @@ std::vector<VerificationResult> verify_proofs(
             mean = std::pow(2, 64);
             median = std::pow(2, 64);
         }
+        return {exp_mismatch_count, mean, median};
+    };
 
-        results.push_back({exp_mismatch_count, mean, median});
+    std::vector<VerificationResult> results{};
+    results.resize(proofs.size());
+    std::size_t tc = std::max(1u, std::thread::hardware_concurrency());
+    std::vector<std::thread> threads {};
+    threads.reserve(tc);
+    std::size_t total = proofs.size();
+    std::size_t chunk = (total + tc - 1)/tc;
+    for (std::size_t ti=0; ti < tc; ++ti) {
+        threads.emplace_back([ti, chunk, total, &results, &eval_batch] {
+            std::size_t start = ti * chunk;
+            std::size_t end = std::min(start + chunk, total);
+            for (std::size_t p=start; p < end; ++p) {
+                results[p] = eval_batch(p);
+            }
+        });
     }
+
+    for (auto&& t : threads) t.join();
 
     return results;
 }
