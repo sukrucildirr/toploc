@@ -6,9 +6,11 @@ from torch.utils.cpp_extension import BuildExtension, CppExtension
 CSRC_DIR = os.path.join("toploc", "C", "csrc")
 
 # Define mac-specific compiler and linker flags
-extra_compile_args = ["-O3"]
 if os.environ.get("DEBUG"):
-    extra_compile_args.append("-DDEBUG")
+    extra_compile_args = ["-DDEBUG", "-O0"]
+else:
+    extra_compile_args = ["-O3"]
+
 extra_link_args: list[str] = []
 
 # Add macOS specific flags
